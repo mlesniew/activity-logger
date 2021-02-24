@@ -33,12 +33,18 @@ def get_active_window_id():
     return int(subprocess.check_output(["xdotool", "getwindowfocus"]))
 
 
+def get_idle_time():
+    return int(subprocess.check_output(["xprintidle"])) / 1000
+
+
 def log():
+    is_idle = get_idle_time() > 60
+    idle_multiply = 1 if is_idle else 2
     timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
     active_window_id = get_active_window_id()
     windows = {win.window_id: win for win in iter_windows()}
     for window in iter_windows():
-        active = int(window.window_id == active_window_id)
+        active = int(window.window_id == active_window_id) * idle_multiply
         print(f"{timestamp}\t{active}\t{window.cls}\t{window.title}")
 
 
