@@ -1,21 +1,29 @@
 #!/usr/bin/env bash
 
+teams_status() {
+    if [ "$(pgrep -cfl '^/usr/share/teams/teams')" = 0 ]
+    then
+        echo "stopped"
+    else
+        if pactl list source-outputs | tr '\n' '|' | sed -E 's#[|][\t ]+#;#g' | tr '|' '\n' | grep -iF skype | grep -qF 'Corked: no;'
+        then
+            echo "meeting"
+        else
+            echo "running"
+        fi
+    fi
+}
+
+get_active_window() {
+    ACTIVE_WINDOW_ID=$(printf '0x%08x\n' "$(xdotool getwindowfocus)")
+    wmctrl -x -l | grep "^${ACTIVE_WINDOW_ID}" | head -n1 | cut -c15- | tr '\t' ' '
+}
+
 {
     while true;
     do
-        echo '========='
-        echo "time: $(date -u --iso=seconds | cut -d+ -f1)"
-        echo "active_window: $(xdotool getwindowfocus)"
-        echo "idle_time: $(xprintidle)"
-        if pactl list source-outputs | tr '\n' '|' | sed -E 's#[|][\t ]+#;#g' | tr '|' '\n' | grep -iF skype | grep -qF 'Corked: no;'
-        then
-            echo "teams_meeting: 1"
-        else
-            echo "teams_meeting: 0"
-        fi
-        echo "tun0_address: $(ifdata -pa tun0)"
-        echo 'windows:'
-        wmctrl -x -l
+        # time, idle time, teams status, tun0 address, active window
+        printf "$(date -u --iso=seconds | cut -d+ -f1)\t$(xprintidle)\t$(teams_status)\t$(ifdata -pa enp0s25)\t$(ifdata -pa wlo1)\t$(ifdata -pa tun0)\t$(get_active_window)\n"
         sleep 10
     done;
 } >> ~/.activity.log
