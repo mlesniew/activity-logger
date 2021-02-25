@@ -31,11 +31,15 @@ spotify_status() {
     } 2>/dev/null
 }
 
+wifi_ssid() {
+    nmcli -t -f active,ssid dev wifi | grep '^yes:' | cut -d: -f2- | head -n1
+}
+
 {
     while true;
     do
         # time, idle time, teams status, tun0 address, active window
-        printf "$(date -u --iso=seconds | cut -d+ -f1)\t$(xprintidle)\t$(teams_status)\t$(spotify_status)\t$(ifdata -pa enp0s25)\t$(ifdata -pa wlo1)\t$(ifdata -pa tun0)\t$(get_active_window)\n"
+        printf "$(date -u --iso=seconds | cut -d+ -f1)\t$(xprintidle)\t$(teams_status)\t$(spotify_status)\t$(wifi_ssid)\t$(ifdata -pa enp0s25)\t$(ifdata -pa wlo1)\t$(ifdata -pa tun0)\t$(get_active_window)\n"
         sleep 10
     done;
 } >> ~/.activity.log
