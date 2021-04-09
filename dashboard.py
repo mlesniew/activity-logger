@@ -119,21 +119,22 @@ if st.checkbox("Show data", key="checkbox1"):
 
 ######
 
-if end_date - start_date >= datetime.timedelta(days=14):
-    st.header("Work time per week")
-    work_hours = get_work_hours(start_date, end_date, "W-SUN")
-    st.plotly_chart(px.bar(work_hours.reset_index(), x="timestamp", y="timedelta"))
+st.header("Activities in time")
 
-######
+aggregation = st.selectbox("Aggregation",
+                           options=["daily", "weekly"],
+                           index=1)
 
-st.header("Activities by day")
+if aggregation == "daily":
+    aggregated = get_activity_time(start_date, end_date).resample("24h").sum()
+else:
+    aggregated = get_activity_time(start_date, end_date).resample("W-SUN", label="left").sum()
 
-daily = get_activity_time(start_date, end_date).resample("24h").sum()
-st.plotly_chart(px.bar(daily.reset_index(), x="timestamp", y=ACTIVITY_NAMES))
-daily["total"] = daily.sum(axis=1)
+st.plotly_chart(px.bar(aggregated.reset_index(), x="timestamp", y=ACTIVITY_NAMES))
+aggregated["total"] = aggregated.sum(axis=1)
 
 if st.checkbox("Show data", key="checkbox2"):
-    st.table(daily)
+    st.table(aggregated)
 
 ######
 
